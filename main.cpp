@@ -6,7 +6,6 @@ int main()
 {
 	auto overlayService = new HandProximityOverlayService();
 
-	overlayService->ResizeWindow(200, 200);
 	PerformanceTracker perf = PerformanceTracker();
 	while (true)
 	{

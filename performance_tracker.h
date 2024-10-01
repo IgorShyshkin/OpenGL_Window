@@ -31,7 +31,7 @@ public:
 		if (_executeCount % 100 == 0)
 		{
 			auto millisecondsTotal = _elapsedTotal / 1000000;
-			std::cout << "Millisec per draw: " << millisecondsTotal / _executeCount << std::endl;
+			std::cout << "Millisec per draw: " << millisecondsTotal / _executeCount << ", _executeCount: "<< _executeCount << std::endl;
 		}
 	}
 

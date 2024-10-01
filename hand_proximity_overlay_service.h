@@ -8,7 +8,6 @@
 class HandProximityOverlayService : public GlfwWindow
 {
 public:
-    void ResizeWindow(int width, int height);
     void SetPosition(int x, int y);
     void Hide();
 
@@ -29,10 +28,11 @@ public:
     HandProximityOverlayService();
     ~HandProximityOverlayService();
 
-    int Width = 500;
-    int Height = 500;
+    int _screen_width = 0;
+    int _screen_height = 0;
 
 private:
+    void ResizeWindowToFullScreen();
     void InitDrawWithShader(unsigned int program);
     void DrawWithShader();
     void SetWindowPosition();
@@ -42,9 +42,6 @@ private:
 
     GLuint _program = 0;
     GLuint _texture_program = 0;
-    
-    int _pos_x = 0; // cursor position x
-    int _pos_y = 0; // cursor position y
 
     float _render_shift_x = 0.0;
     float _render_shift_y = 0.0;
