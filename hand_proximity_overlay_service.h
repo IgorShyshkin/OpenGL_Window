@@ -4,6 +4,8 @@
 //#include "core/pipeline_context.h"
 
 #include "glfw_window.h"
+#include "DirectX/screen_recorder.h"
+#include <memory>
 
 class HandProximityOverlayService : public GlfwWindow
 {
@@ -55,6 +57,7 @@ private:
     //HDC hMemoryDC;
     HDC hScreenDC;
 
+    std::unique_ptr<ScreenRecorder> _screenRecorder;
 };
 
 #endif /* INA_HAND_PROXIMITY_SERVICES_OVERLAY_SERVICE_H */

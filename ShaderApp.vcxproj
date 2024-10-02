@@ -109,7 +109,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;dxgi.lib;d3d11.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)external\glfw;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -128,21 +128,25 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;dxgi.lib;d3d11.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)external\glfw;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DirectX\screen_recorder.cpp" />
     <ClCompile Include="External\glad\src\glad.c" />
     <ClCompile Include="glfw_window.cpp" />
     <ClCompile Include="hand_proximity_overlay_service.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="performance_tracker.cpp" />
+    <ClCompile Include="DirectX\screen_duplication.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DirectX\screen_recorder.h" />
     <ClInclude Include="glfw_window.h" />
     <ClInclude Include="hand_proximity_overlay_service.h" />
     <ClInclude Include="performance_tracker.h" />
+    <ClInclude Include="DirectX\screen_duplication.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

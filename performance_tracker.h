@@ -9,6 +9,7 @@ class PerformanceTracker
 
 	long _executeCount;
 	long long _elapsedTotal;
+	std::string _name = "";
 
 public:
 
@@ -16,6 +17,13 @@ public:
 	{
 		_executeCount = 0;
 		_elapsedTotal = 0;
+	}
+
+	PerformanceTracker(std::string name)
+	{
+		_executeCount = 0;
+		_elapsedTotal = 0;
+		_name = name;
 	}
 
 	void Start()
@@ -31,7 +39,7 @@ public:
 		if (_executeCount % 100 == 0)
 		{
 			auto millisecondsTotal = _elapsedTotal / 1000000;
-			std::cout << "Millisec per draw: " << millisecondsTotal / _executeCount << ", _executeCount: "<< _executeCount << std::endl;
+			std::cout << _name <<" Millisec per draw: " << millisecondsTotal / _executeCount << ", _executeCount: "<< _executeCount << std::endl;
 		}
 	}
 

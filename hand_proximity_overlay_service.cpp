@@ -4,6 +4,8 @@
 #include <sstream>
 #include <vector>
 #include <regex>
+#include "performance_tracker.h"
+#include "DirectX/screen_recorder.h"
 
 
 using namespace std;
@@ -71,16 +73,20 @@ HandProximityOverlayService::HandProximityOverlayService() {
     hBitmap = CreateCompatibleBitmap(hScreenDC, _screen_width, _screen_height);
 
     // create data buffer for texture
-    screen_texture_data = new GLubyte[_screen_width * _screen_height * 3];
+    screen_texture_data = new GLubyte[_screen_width * _screen_height * 4];
 
     ExcludeCapture();
+    //IncludeCapture();
 
     ResizeWindowToFullScreen();
+    _screenRecorder = std::make_unique<ScreenRecorder>(_screen_width, _screen_height);
 }
 
 HandProximityOverlayService::~HandProximityOverlayService() {
     delete screen_texture_data;
 }
+
+PerformanceTracker perf = PerformanceTracker("BitBlt");
 
 void HandProximityOverlayService::InitDrawWithShader(unsigned int program) {
 
@@ -96,31 +102,39 @@ void HandProximityOverlayService::InitDrawWithShader(unsigned int program) {
     //HDC hScreenDC = GetDC(nullptr); // CreateDC("DISPLAY",nullptr,nullptr,nullptr);
     int width_screen = GetDeviceCaps(hScreenDC, HORZRES);
     int height_screen = GetDeviceCaps(hScreenDC, VERTRES);
-    HDC hMemoryDC = CreateCompatibleDC(hScreenDC);
-    //HBITMAP hBitmap = CreateCompatibleBitmap(hScreenDC, width_screen, height_screen);
+    //HDC hMemoryDC = CreateCompatibleDC(hScreenDC);
+    ////HBITMAP hBitmap = CreateCompatibleBitmap(hScreenDC, width_screen, height_screen);
 
-    HBITMAP hOldBitmap = static_cast<HBITMAP>(SelectObject(hMemoryDC, hBitmap));
-    BitBlt(hMemoryDC, 0, 0, _screen_width, _screen_height, hScreenDC, 0, 0, SRCCOPY);
-    hBitmap = static_cast<HBITMAP>(SelectObject(hMemoryDC, hOldBitmap));
+    perf.Start();
 
-    BITMAPINFOHEADER info;
-    info.biSize = sizeof(BITMAPINFOHEADER);
-    info.biWidth = _screen_width;
-    info.biHeight = -_screen_height; // we usually want a top-down-bitmap
-    info.biPlanes = 1;
-    info.biBitCount = 24;
-    info.biCompression = BI_RGB;
-    info.biSizeImage = 0;
-    info.biXPelsPerMeter = 10000; // just some value
-    info.biYPelsPerMeter = 10000; // just some value
-    info.biClrUsed = 0;
-    info.biClrImportant = 0;
-    GetDIBits(hMemoryDC, hBitmap, 0, _screen_height, (void*)screen_texture_data, (BITMAPINFO*)&info, DIB_RGB_COLORS);
+    //HBITMAP hOldBitmap = static_cast<HBITMAP>(SelectObject(hMemoryDC, hBitmap));
+    //BitBlt(hMemoryDC, 0, 0, _screen_width, _screen_height, hScreenDC, 0, 0, SRCCOPY);
+    //hBitmap = static_cast<HBITMAP>(SelectObject(hMemoryDC, hOldBitmap));
+
+    //
+
+    //BITMAPINFOHEADER info;
+    //info.biSize = sizeof(BITMAPINFOHEADER);
+    //info.biWidth = _screen_width;
+    //info.biHeight = -_screen_height; // we usually want a top-down-bitmap
+    //info.biPlanes = 1;
+    //info.biBitCount = 24;
+    //info.biCompression = BI_RGB;
+    //info.biSizeImage = 0;
+    //info.biXPelsPerMeter = 10000; // just some value
+    //info.biYPelsPerMeter = 10000; // just some value
+    //info.biClrUsed = 0;
+    //info.biClrImportant = 0;
+    //GetDIBits(hMemoryDC, hBitmap, 0, _screen_height, (void*)screen_texture_data, (BITMAPINFO*)&info, DIB_RGB_COLORS);
+
+    long screenDataSize = 0;
+    screen_texture_data = (GLubyte*)_screenRecorder->GetScreenData(screenDataSize);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, screen_texture);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _screen_width, _screen_height, GL_RGB, GL_UNSIGNED_BYTE, screen_texture_data);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _screen_width, _screen_height, GL_RGBA, GL_UNSIGNED_BYTE, screen_texture_data);
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _screen_width, _screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, screen_texture_data);
 
-    SetUniform1f("magnification", _magnification);
+    perf.Stop();
 }
 
 void HandProximityOverlayService::DrawWithShader() {
@@ -263,15 +277,16 @@ void main()
     
     vec2 uv = vec2(pos.x / 2.0 + 0.5, -pos.y / 2.0 + 0.5);
     color_frag = texture(screen_texture, uv);
-    color_frag = vec4(color_frag.b, color_frag.g, color_frag.r, color_frag.w); // bgr to rgb
+    color_frag = vec4(color_frag.b, color_frag.g, color_frag.r, 1); // bgr to rgb
+  
 
     //cursor
-    if(dist_to_cursor < 0.05)
+    float cur_size = 0.15;
+    if(dist_to_cursor < cur_size)
     {
         //color_frag = vec4(dist_to_cursor, dist_to_cursor, dist_to_cursor, 1);
-        color_frag = gradient(color_frag, vec4(0,0.6,0.6,0), dist_to_cursor / 0.05);
+        color_frag = gradient(color_frag, vec4(0, 0.6, 0.6, 0), dist_to_cursor / cur_size);
     }
-
 }
 
 )FRAGMENTSHADER";
