@@ -57,7 +57,7 @@ private:
     //HDC hMemoryDC;
     HDC hScreenDC;
 
-    std::unique_ptr<ScreenRecorder> _screenRecorder;
+    DUPLICATIONMANAGER* _duplicationManager = nullptr;
 };
 
 #endif /* INA_HAND_PROXIMITY_SERVICES_OVERLAY_SERVICE_H */
