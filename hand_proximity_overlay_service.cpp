@@ -57,29 +57,13 @@ HandProximityOverlayService::HandProximityOverlayService() {
     int windowStyle = GetWindowLong(hWnd, GWL_EXSTYLE);
     SetWindowLong(hWnd, GWL_EXSTYLE, windowStyle | WS_EX_TOOLWINDOW); //3d argument=style
 
-    // create screen texture
-    glGenTextures(1, &screen_texture);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, screen_texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _screen_width, _screen_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-
-    //hMemoryDC = CreateCompatibleDC(hScreenDC);
-    hBitmap = CreateCompatibleBitmap(hScreenDC, _screen_width, _screen_height);
-
-    // create data buffer for texture
-    screen_texture_data = new GLubyte[_screen_width * _screen_height * 3];
-
     ExcludeCapture();
 
     ResizeWindowToFullScreen();
 }
 
 HandProximityOverlayService::~HandProximityOverlayService() {
-    delete screen_texture_data;
+    //delete screen_texture_data;
 }
 
 void HandProximityOverlayService::InitDrawWithShader(unsigned int program) {
@@ -92,35 +76,6 @@ void HandProximityOverlayService::InitDrawWithShader(unsigned int program) {
     glViewport(0, 0, _screen_width, _screen_height);
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(_program);
-
-    //HDC hScreenDC = GetDC(nullptr); // CreateDC("DISPLAY",nullptr,nullptr,nullptr);
-    int width_screen = GetDeviceCaps(hScreenDC, HORZRES);
-    int height_screen = GetDeviceCaps(hScreenDC, VERTRES);
-    HDC hMemoryDC = CreateCompatibleDC(hScreenDC);
-    //HBITMAP hBitmap = CreateCompatibleBitmap(hScreenDC, width_screen, height_screen);
-
-    HBITMAP hOldBitmap = static_cast<HBITMAP>(SelectObject(hMemoryDC, hBitmap));
-    BitBlt(hMemoryDC, 0, 0, _screen_width, _screen_height, hScreenDC, 0, 0, SRCCOPY);
-    hBitmap = static_cast<HBITMAP>(SelectObject(hMemoryDC, hOldBitmap));
-
-    BITMAPINFOHEADER info;
-    info.biSize = sizeof(BITMAPINFOHEADER);
-    info.biWidth = _screen_width;
-    info.biHeight = -_screen_height; // we usually want a top-down-bitmap
-    info.biPlanes = 1;
-    info.biBitCount = 24;
-    info.biCompression = BI_RGB;
-    info.biSizeImage = 0;
-    info.biXPelsPerMeter = 10000; // just some value
-    info.biYPelsPerMeter = 10000; // just some value
-    info.biClrUsed = 0;
-    info.biClrImportant = 0;
-    GetDIBits(hMemoryDC, hBitmap, 0, _screen_height, (void*)screen_texture_data, (BITMAPINFO*)&info, DIB_RGB_COLORS);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, screen_texture);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _screen_width, _screen_height, GL_RGB, GL_UNSIGNED_BYTE, screen_texture_data);
-
-    SetUniform1f("magnification", _magnification);
 }
 
 void HandProximityOverlayService::DrawWithShader() {
@@ -150,19 +105,9 @@ void HandProximityOverlayService::IncludeCapture() {
 
 void HandProximityOverlayService::ResizeWindowToFullScreen() 
 {
-
     glfwMakeContextCurrent(_window);
     ResizeGlfwWindow(_screen_width, _screen_height);
     SetWindowPosition();
-
-    delete screen_texture_data;
-    screen_texture_data = new GLubyte[_screen_width * _screen_height * 3];
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, screen_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _screen_width, _screen_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
 }
 
 void HandProximityOverlayService::SetPosition(int x, int y) 
@@ -240,17 +185,7 @@ std::string HandProximityOverlayService::GetFragmentShaderCodeTemplate() {
 #version 330 core
 out vec4 color_frag;
 in vec2 pos;
-uniform sampler2D screen_texture;
 uniform vec2 cursor_pos;
-
-vec4 draw(vec2 input_pos)
-{
-	vec4 output_color = vec4(0.0);
-	vec2 uv = vec2((input_pos.x + 1.0)/2.0, (-input_pos.y + 1.0)/2.0);
-
-    output_color = vec4(0, 0, 0, 0);
-	return output_color; // output_color is premultiplied
-}
 
 vec4 gradient(in vec4 color1, in vec4 color2, in float value)
 {
@@ -260,18 +195,16 @@ vec4 gradient(in vec4 color1, in vec4 color2, in float value)
 void main()
 {
     float dist_to_cursor = distance(pos, cursor_pos);
-    
-    vec2 uv = vec2(pos.x / 2.0 + 0.5, -pos.y / 2.0 + 0.5);
-    color_frag = texture(screen_texture, uv);
-    color_frag = vec4(color_frag.b, color_frag.g, color_frag.r, color_frag.w); // bgr to rgb
+
+    color_frag = vec4(0, 0, 0, 0);
+    //color_frag = vec4(color_frag.b, color_frag.g, color_frag.r, color_frag.w); // bgr to rgb
 
     //cursor
-    if(dist_to_cursor < 0.05)
+    float cur_size = 0.10;
+    if(dist_to_cursor < cur_size)
     {
-        //color_frag = vec4(dist_to_cursor, dist_to_cursor, dist_to_cursor, 1);
-        color_frag = gradient(color_frag, vec4(0,0.6,0.6,0), dist_to_cursor / 0.05);
-    }
-
+        color_frag = gradient(color_frag, vec4(0,0.6,0.6,0), dist_to_cursor / cur_size);
+    }  
 }
 
 )FRAGMENTSHADER";

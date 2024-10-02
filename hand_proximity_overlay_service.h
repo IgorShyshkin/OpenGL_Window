@@ -46,13 +46,6 @@ private:
     float _render_shift_x = 0.0;
     float _render_shift_y = 0.0;
 
-    // magnifier
-    float _magnification = 2.0;
-    //GLuint _magnifier_program = 0;
-    unsigned int screen_texture = 0;
-    GLubyte* screen_texture_data = NULL;
-    HBITMAP hBitmap;
-    //HDC hMemoryDC;
     HDC hScreenDC;
 
 };
